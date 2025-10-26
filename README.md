@@ -1,2 +1,17 @@
-# Scientific-Calculator
-A modern web-based scientific calculator with a sleek UI, responsive design, and advanced math functions implemented in pure HTML, CSS, and JavaScript.
+# Scientific Calculator
+
+A modern, responsive, and fully functional scientific calculator built with **HTML**, **CSS**, and **JavaScript**.
+
+## Features
+- Standard and scientific functions (sin, cos, tan, log, factorial, etc.)
+- Memory operations (M+, M-, MR, MC)
+- Calculation history panel
+- Responsive design for mobile screens
+- DEG/RAD mode toggle
+
+## Usage
+Open `index.html` in your browser to use the calculator.
+
+## Author
+Developed by Papia Karmakar.
+
