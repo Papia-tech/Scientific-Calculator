@@ -67,9 +67,12 @@
         }
 
         #historyList {
+            background: url("history.jpg");
+            background-size: cover;
+            background-repeat: no-repeat;
             flex-grow: 1;
             overflow-y: auto;
-            background: #333;
+
             border-radius: 10px;
             padding: 15px;
             font-size: 16px;
@@ -102,11 +105,11 @@
         #display {
             width: calc(100% - 30px);
             height: 60px;
-            background: white;
+            background: #fff;
             border: none;
             border-radius: 15px;
             font-size: 28px;
-            color: #111;
+            color: #333;
             padding-left: 15px;
             padding-right: 15px;
             text-align: right;
@@ -126,6 +129,7 @@
             grid-row: span 3;
             background: #444;
             border: none;
+            box-shadow: none;
             border-radius: 10px;
             color: #fff;
             font-size: 16px;
@@ -181,7 +185,7 @@
                 position: absolute;
                 top: 0px;
                 right: 10px;
-                width: 70vw;
+                width: calc(100% - 120px);
                 height: 80vh;
                 z-index: 1;
                 /* default behind history */
@@ -193,7 +197,7 @@
                 position: absolute;
                 top: 0px;
                 left: 10px;
-                width: 70vw;
+                width: calc(100% - 120px);
                 height: 80vh;
                 z-index: 0;
                 /* default behind calculator */
