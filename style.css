@@ -301,7 +301,7 @@
 
         .calculator {
             position: absolute;
-            top: 20px;
+            top: 40px;
             right: 10px;
             width: calc(100% - 100px);
             height: 70vh;
@@ -313,7 +313,7 @@
         .history {
             opacity: 0.3;
             position: absolute;
-            top: 20px;
+            top: 40px;
             left: 10px;
             width: calc(100% - 100px);
             height: 70vh;
@@ -393,4 +393,5 @@
     #toggleBtn:hover {
         background: none;
         box-shadow: none;
+
     }
