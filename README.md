@@ -10,7 +10,7 @@ A modern, responsive, and fully functional scientific calculator built with **HT
 - DEG/RAD mode toggle
 
 ## Usage
-Open `index.html` in your browser to use the calculator.
+Open `[index.html](https://papia-tech.github.io/Scientific-Calculator/)` to use the calculator.
 
 ## Author
 Developed by Papia Karmakar.
