@@ -301,7 +301,7 @@
 
         .calculator {
             position: absolute;
-            top: 40px;
+            top: 70px;
             right: 10px;
             width: calc(100% - 100px);
             height: 70vh;
@@ -313,7 +313,7 @@
         .history {
             opacity: 0.3;
             position: absolute;
-            top: 40px;
+            top: 70px;
             left: 10px;
             width: calc(100% - 100px);
             height: 70vh;
@@ -395,3 +395,4 @@
         box-shadow: none;
 
     }
+
