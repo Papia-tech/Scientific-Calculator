@@ -1,15 +1,45 @@
+// ========== GLOBALS ==========
 const display = document.getElementById("display");
 const historyList = document.getElementById("historyList");
 let degreeMode = true;
 let memory = 0;
 let lastAns = 0;
+let expression = "";
 
-// Core functions
-let expression = ""; // new global variable
+// ========== HELPERS ==========
+if (!Math.log10) Math.log10 = x => Math.log(x) / Math.LN10; // fallback log10
 
+function safeAppendExpr(val) {
+    expression += String(val);
+}
+
+function sanitizeBeforeEval(expr) {
+    expr = expr.replace(/×/g, '*').replace(/÷/g, '/');
+    expr = expr.replace(/%/g, '/100');
+    expr = expr.replace(/\^/g, '**');
+
+    // Close missing brackets
+    let open = (expr.match(/\(/g) || []).length;
+    let close = (expr.match(/\)/g) || []).length;
+    while (close < open) { expr += ')'; close++; }
+
+    return expr;
+}
+
+// ========== INPUT FUNCTIONS ==========
 function appendValue(value) {
-    display.value += value; // what user sees
-    expression += value;    // what JS evaluates
+    display.value += value;
+    safeAppendExpr(value);
+}
+
+function appendSymbol(displaySymbol, evalValue) {
+    display.value += displaySymbol;
+    safeAppendExpr(evalValue);
+}
+
+function deleteLast() {
+    display.value = display.value.slice(0, -1);
+    expression = expression.slice(0, -1);
 }
 
 function clearDisplay() {
@@ -17,133 +47,99 @@ function clearDisplay() {
     expression = "";
 }
 
-function appendSymbol(displaySymbol, evalValue) {
-    display.value += displaySymbol;  // what user sees
-    expression += evalValue;         // what JS evaluates
+// ========== TRIG ==========
+function appendTrig(fn) {
+    display.value += fn + " ";
+    expression += `Math.${fn}(`;
 }
 
+// Degree / Radian toggle
 function toggleDegRad() {
     degreeMode = !degreeMode;
-    event.target.textContent = degreeMode ? "DEG" : "RAD";
+    const btn = document.getElementById("toggleDegRad");
+    btn.textContent = degreeMode ? "DEG" : "RAD";
 }
 
-function calculateResult() {
-    try {
-        // Save user-entered expression for history before processing
-        const userExpression = display.value.trim();
-
-        let expr = expression;
-
-        // Auto-fix: add missing closing parentheses
-        let openCount = (expr.match(/\(/g) || []).length;
-        let closeCount = (expr.match(/\)/g) || []).length;
-        while (closeCount < openCount) {
-            expr += ')';
-            closeCount++;
-        }
-
-        // Handle factorial
-        expr = expr.replace(/(\d+)!/g, (match, n) => `factorial(${n})`);
-
-        // Replace ^ with ** for exponentiation
-        expr = expr.replace(/\^/g, "**");
-
-        // Replace √number or √(...) with Math.sqrt(...)
-        //expr = expr.replace(/√\(?([^\)]+)\)?/g, 'Math.sqrt($1)');
-
-        // Before eval
-        expr = expr.replace(/√(\d+(\.\d+)?|\([^\)]+\))/g, 'Math.sqrt($1)');
-
-        // Replace trig function names with Math.*
-        expr = expr.replace(/\b(sin|cos|tan|asin|acos|atan)\b/g, fn => `Math.${fn}`);
-
-        // Add * between numbers and parentheses
-        expr = expr.replace(/(\d)\(/g, '$1*(')
-            .replace(/\)(\d)/g, ')*$1')
-            .replace(/\)\(/g, ')*(');
-
-        // Handle nPr and nCr (like 5P2 or 6C3)
-        expr = expr.replace(/(\d+)P(\d+)/g, (_, n, r) => `nPr(${n},${r})`);
-        expr = expr.replace(/(\d+)C(\d+)/g, (_, n, r) => `nCr(${n},${r})`);
-
-        // Convert degree to radian for trig functions if in DEG mode
-        if (degreeMode) {
-            expr = expr.replace(/Math\.(sin|cos|tan)\(/g, 'Math.$1(Math.PI/180*');
-        }
-
-        // ✅ Evaluate safely
-        let result = eval(expr);
-
-        // --- Handle floating point rounding and special trig cases ---
-        // Round to 10 decimal places to remove minor float errors
-        result = Math.round(result * 1e10) / 1e10;
-
-        // Fix near-zero values (like cos(90) = 6.123e-17)
-        if (Math.abs(result) < 1e-10) result = 0;
-
-        // Fix common perfect trig values
-        if (Math.abs(result - 1) < 1e-10) result = 1;
-        if (Math.abs(result + 1) < 1e-10) result = -1;
-
-        lastAns = result;
-
-        // Add clean readable entry to history
-        addToHistory(userExpression, result);
-
-        display.value = result;
-        expression = result.toString();
-    } catch (err) {
-        display.value = "Error";
+// ========== LOG / LN ==========
+function appendLogarithmic(fn) {
+    if (fn === 'log') {
+        display.value += "log";
+        expression += "Math.log10(";
+    } else {
+        display.value += "ln";
+        expression += "Math.log(";
     }
 }
 
+// ========== ROOTS ==========
+function appendSqrt() {
+    display.value += "√";
+    expression += "Math.sqrt(";
+}
 
-
-
+// nth root: x√y (input format: x,y)
 function xRoot() {
     try {
-        // Split input by comma: "x,y"
         let [x, y] = display.value.split(',').map(Number);
         if (isNaN(x) || isNaN(y)) throw Error();
-        const result = Math.pow(y, 1 / x);  // y^(1/x)
+        const result = Math.pow(y, 1/x);
         display.value = result;
+        expression = result.toString();
         addToHistory(`${x}√${y}`, result);
     } catch {
         display.value = "Error";
     }
 }
 
-function appendSqrt() {
-    display.value += '√';
-    expression += '√'; // just placeholder, let calculateResult replace it
+// ========== EXP ==========
+function appendExp() {
+    display.value += "e^";
+    expression += "Math.exp(";
 }
 
-function multiplyTenPower() {
-    // Append to display for user
-    display.value += '×10^';
-    // Append to expression for eval: replace ^ with ** later
-    expression += '*10^';
+// ========== POWER ==========
+function appendPower() {
+    display.value += "^";
+    expression += "^";
 }
 
-
-
-
-
-function appendTrig(fn) {
-    // Display: show as "tan 45" or "sin 30"
-    display.value += fn + ' ';
-    // Expression: add function call with parentheses
-    expression += fn + '(';
+function square() {
+    const e = expression;
+    const d = display.value;
+    display.value = `${d}²`;
+    expression = `(${e})**2`;
 }
 
+// reciprocal
+function reciprocal() {
+    try {
+        const n = eval(expression);
+        const r = 1 / n;
+        display.value = r;
+        expression = r.toString();
+        addToHistory(`1/(${n})`, r);
+    } catch {
+        display.value = "Error";
+    }
+}
 
-// Function to calculate factorial
+// ========== FACTORIAL / PERM / COMB ==========
+function factorial(n) {
+    if (n < 0 || !Number.isInteger(n)) throw "Bad input";
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+}
+
+function appendFactorial() {
+    display.value += "!";
+    expression += "!";
+}
+
 function calculateFactorialButton() {
     try {
-        const n = eval(display.value);
-        if (n < 0 || !Number.isInteger(n)) throw Error();
-        let res = 1;
-        for (let i = 1; i <= n; i++) res *= i;
+        const n = eval(expression);
+        const res = factorial(n);
         display.value = res;
         expression = res.toString();
         addToHistory(`${n}!`, res);
@@ -152,112 +148,122 @@ function calculateFactorialButton() {
     }
 }
 
-// Function for nPr
 function nPr(n, r) {
     return factorial(n) / factorial(n - r);
 }
 
-// Function for nCr
 function nCr(n, r) {
     return factorial(n) / (factorial(r) * factorial(n - r));
 }
 
-
-// Scientific functions
-function factorial(n) {
-    if (n < 0 || !Number.isInteger(n)) throw new Error("Invalid input for factorial");
-    let res = 1;
-    for (let i = 2; i <= n; i++) res *= i;
-    return res;
+function appendPermutation() {
+    display.value += "P";
+    expression += "P";
 }
 
-function appendFactorial() {
-    display.value += '!';
-    expression += '!';
+function appendCombination() {
+    display.value += "C";
+    expression += "C";
 }
 
-
-function square() {
-    display.value += '²';       // what user sees
-    expression += '**2';        // what JS evaluates later
-}
-
-
-function reciprocal() {
+// ========== SCI CALC ENGINE ==========
+function calculateResult() {
     try {
-        const n = eval(expression); // use expression, not display.value
-        const res = 1 / n;
-        display.value = res;
-        expression = res.toString(); // update expression
-        addToHistory(`1/(${n})`, res);
-    } catch {
+        const userExp = display.value.trim();
+        let expr = sanitizeBeforeEval(expression);
+
+        expr = expr.replace(/(\d+)!/g, (m, n) => `factorial(${n})`);
+        expr = expr.replace(/(\d+)P(\d+)/g, (_, n, r) => `nPr(${n},${r})`);
+        expr = expr.replace(/(\d+)C(\d+)/g, (_, n, r) => `nCr(${n},${r})`);
+
+        if (degreeMode) {
+            expr = expr.replace(/Math\.(sin|cos|tan)\(/g, 'Math.$1(Math.PI/180*');
+        }
+
+        let result = eval(expr);
+
+        result = Math.round(result * 1e10) / 1e10;
+        if (Math.abs(result) < 1e-10) result = 0;
+
+        lastAns = result;
+        addToHistory(userExp, result);
+
+        display.value = result;
+        expression = result.toString();
+    } catch (e) {
+        console.error(e);
         display.value = "Error";
         expression = "";
     }
 }
 
-function appendPermutation() {
-    display.value += 'P';
-    expression += 'P';
-}
-
-function appendCombination() {
-    display.value += 'C';
-    expression += 'C';
-}
-
-// Memory operations
-function memoryAdd() { memory += eval(display.value || 0); }
-function memorySubtract() { memory -= eval(display.value || 0); }
-function memoryRecall() { display.value += memory; }
+// ========== MEMORY ==========
+function memoryAdd() { memory += Number(display.value) || 0; }
+function memorySubtract() { memory -= Number(display.value) || 0; }
+function memoryRecall() { appendValue(memory); }
 function memoryClear() { memory = 0; }
 
-// History
-function addToHistory(expression, result) {
+// ========== HISTORY ==========
+function addToHistory(exp, result) {
+    const entry = `${exp} = ${result}`;
+
+    // Add to screen
     const p = document.createElement("p");
-    p.textContent = `${expression} = ${result}`;
+    p.textContent = entry;
     historyList.appendChild(p);
     historyList.scrollTop = historyList.scrollHeight;
+
+    // Save to localStorage
+    let history = JSON.parse(localStorage.getItem("calcHistory")) || [];
+    history.push(entry);
+    localStorage.setItem("calcHistory", JSON.stringify(history));
 }
-function clearHistory() { historyList.innerHTML = ""; }
 
-function deleteLast() {
-    display.value = display.value.slice(0, -1);
-    expression = expression.slice(0, -1);
+function clearHistory() {
+    historyList.innerHTML = "";
+    localStorage.removeItem("calcHistory");
 }
 
+window.addEventListener("load", () => {
+    let history = JSON.parse(localStorage.getItem("calcHistory")) || [];
+    history.forEach(entry => {
+        const p = document.createElement("p");
+        p.textContent = entry;
+        historyList.appendChild(p);
+    });
+});
 
-// Keyboard input
+// ========== KEYBOARD ==========
 document.addEventListener("keydown", e => {
     const k = e.key;
     if (/[\d+\-*/().]/.test(k)) appendValue(k);
-    else if (k === "Enter" || k === "=") calculateResult();
+    else if (k === "Enter") calculateResult();
     else if (k === "Backspace") deleteLast();
     else if (k.toLowerCase() === "c") clearDisplay();
 });
 
-const historyPanel = document.getElementById('historyPanel');
-const calculator = document.querySelector('.calculator');
+// ========== UI PANEL ==========
+const historyPanel = document.getElementById("historyPanel");
+const calculator = document.querySelector(".calculator");
 
-historyPanel.addEventListener('click', () => {
-    historyPanel.classList.add('active');
-    calculator.classList.add('behind');
+historyPanel.addEventListener("click", () => {
+    historyPanel.classList.add("active");
+    calculator.classList.add("behind");
 });
 
-// Optional: click calculator to bring it forward again
-calculator.addEventListener('click', () => {
-    historyPanel.classList.remove('active');
-    calculator.classList.remove('behind');
+calculator.addEventListener("click", () => {
+    historyPanel.classList.remove("active");
+    calculator.classList.remove("behind");
 });
 
-const toggleBtn = document.getElementById('toggleBtn');
-
-toggleBtn.addEventListener('click', () => {
-    if (document.body.classList.contains('neon')) {
-        document.body.classList.replace('neon', 'dark');
-        toggleBtn.textContent = "🔘"; // dark theme emoji
+// Theme
+const toggleBtn = document.getElementById("toggleBtn");
+toggleBtn.addEventListener("click", () => {
+    if (document.body.classList.contains("neon")) {
+        document.body.classList.replace("neon", "dark");
+        toggleBtn.textContent = "🔘";
     } else {
-        document.body.classList.replace('dark', 'neon');
-        toggleBtn.textContent = "⚫"; // neon theme emoji
+        document.body.classList.replace("dark", "neon");
+        toggleBtn.textContent = "⚫";
     }
 });

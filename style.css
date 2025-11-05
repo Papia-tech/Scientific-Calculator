@@ -238,6 +238,16 @@
         box-shadow: 0 2px #0d0d14;
     }
 
+    body.neon .white{
+        background: #1ae3dc;
+        color: #0a0f1f;
+    }
+
+    body.dark .white{
+        background: #fff;
+        color: #585858;
+    }
+
     .space {
         grid-column-start: 1;
         grid-column-end: 7;
