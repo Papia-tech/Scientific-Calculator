@@ -303,7 +303,7 @@
             position: absolute;
             top: 0px;
             right: 10px;
-            width: calc(100% - 120px);
+            width: calc(100% - 100px);
             height: 80vh;
             z-index: 1;
             /* default behind history */
@@ -315,7 +315,7 @@
             position: absolute;
             top: 0px;
             left: 10px;
-            width: calc(100% - 120px);
+            width: calc(100% - 100px);
             height: 80vh;
             z-index: 0;
             /* default behind calculator */
@@ -326,7 +326,7 @@
             display: block;
             color: #fff;
             text-align: left;
-            font-size: 30px;
+            font-size: 25px;
             position: absolute;
             text-transform: uppercase;
             top: 50%;
