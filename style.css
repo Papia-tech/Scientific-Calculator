@@ -301,10 +301,10 @@
 
         .calculator {
             position: absolute;
-            top: 0px;
+            top: 20px;
             right: 10px;
             width: calc(100% - 100px);
-            height: 80vh;
+            height: 70vh;
             z-index: 1;
             /* default behind history */
             transition: all 0.5s ease;
@@ -313,10 +313,10 @@
         .history {
             opacity: 0.3;
             position: absolute;
-            top: 0px;
+            top: 20px;
             left: 10px;
             width: calc(100% - 100px);
-            height: 80vh;
+            height: 70vh;
             z-index: 0;
             /* default behind calculator */
             transition: all 0.5s ease;
